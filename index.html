@@ -30,7 +30,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/site.css?v=1">
+<link rel="stylesheet" href="assets/site.css?v=2">
 <link rel="stylesheet" href="assets/booking-widget.css">
 </head>
 <body>
@@ -46,7 +46,13 @@
 </header>
 
 <section class="hero" id="top">
-<img src="assets/Sunrise-Maui-Mini-Session.jpg" alt="A family in white outfits smiling on a Wailea beach at sunrise" loading="eager" fetchpriority="high">
+<div class="hero-slider">
+<img class="hero-slide active" src="assets/Sunrise-Maui-Mini-Session.jpg" alt="A family in white outfits smiling on a Wailea beach at sunrise" loading="eager" fetchpriority="high">
+<img class="hero-slide" src="assets/wailea-photo-sunrise.jpg" alt="A woman walking into the water at sunrise in Maui" loading="lazy">
+<img class="hero-slide" src="assets/Wailea-Photo-Family-Sunset.jpg" alt="A family portrait at sunset in Wailea" loading="lazy">
+<img class="hero-slide" src="assets/Maluaka-beach-family-photos.jpg" alt="A family portrait session at a remote Maui beach" loading="lazy">
+<img class="hero-slide" src="assets/cinematic-sunset-wailea-photo.jpg" alt="A cinematic portrait at sunset in Wailea" loading="lazy">
+</div>
 <div class="hero-copy">
 <div class="chapter">MAUI'S ORIGINAL MINI SESSION</div>
 <h1>Maui memories, made simple.</h1>
@@ -169,4 +175,16 @@ document.getElementById('year').textContent = new Date().getFullYear();
 </script>
 <script src="assets/booking-widget.js"></script>
 <script src="assets/inquiry-widget.js"></script>
+<script>
+(function () {
+  var slides = document.querySelectorAll('.hero-slide');
+  if (slides.length < 2) return;
+  var current = 0;
+  setInterval(function () {
+    slides[current].classList.remove('active');
+    current = (current + 1) % slides.length;
+    slides[current].classList.add('active');
+  }, 2000);
+})();
+</script>
 </body></html>
