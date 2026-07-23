@@ -1,13 +1,11 @@
-/* Maui Mini Session — site styles.
-   Palette: soft blush + sage, warm cream background. Deliberately simpler than
-   waileaphoto.com: one page, four sessions, minimal copy. */
+/* Maui Mini Session — soft blush, sage, and a warm cream background. */
 
 :root{
   --serif:'Cormorant Garamond',serif;
   --sans:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
   --cream:#fbf5f0;
   --blush:#f3d9ce;
-  --blush-deep:#dd9c85;
+  --blush-deep:#b85f45;
   --sage:#93a884;
   --sage-deep:#6f8560;
   --ink:#3a332c;
@@ -176,9 +174,25 @@ h1,h2,h3{font-family:var(--serif);font-weight:500;margin:0;color:var(--ink)}
 }
 .session-card-book:hover{color:var(--sage-deep);border-color:var(--sage-deep)}
 .pricing-note{max-width:640px;margin:36px auto 0;text-align:center;font:400 13px/1.6 var(--sans);color:var(--ink-soft)}
+.weather-note{
+  max-width:640px;margin:8px auto 0;text-align:center;
+  font:600 13px/1.6 var(--sans);color:var(--sage-deep);
+}
 @media (prefers-reduced-motion:reduce){
   .session-carousel-slide{transition:none}
 }
+
+/* reviews */
+.reviews{
+  padding:72px 5%;background:var(--white);
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+}
+.reviews .section-head{margin-bottom:32px}
+.reviews .section-head p{
+  margin:14px auto 0;max-width:540px;
+  font:400 15px/1.6 var(--sans);color:var(--ink-soft);
+}
+.reviews [class*="elfsight-app-"]{max-width:1180px;margin:0 auto}
 
 /* family */
 .family{
