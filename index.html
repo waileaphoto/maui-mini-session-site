@@ -85,7 +85,20 @@
 <div class="session-grid">
 
 <div class="session-card">
-<div class="session-card-image"><span class="session-card-price">$249</span><img src="assets/Sunrise.jpg" width="2000" height="1334" alt="A family of three smiling on a quiet Maui beach at sunrise" loading="lazy"></div>
+<div class="session-card-image session-carousel" data-session-carousel aria-label="Morning Mini Session sample photographs">
+<span class="session-card-price">$249</span>
+<div class="session-carousel-track">
+<img class="session-carousel-slide active" src="assets/Sunrise.jpg" width="2000" height="1334" alt="A family of three smiling on a quiet Maui beach at sunrise" loading="lazy">
+<img class="session-carousel-slide" src="assets/Maui-Mini-Session-5.jpg" width="598" height="898" alt="A Maui Mini Session portrait on the beach" loading="lazy">
+<img class="session-carousel-slide" src="assets/Sunrise-IG-5.jpg" width="2000" height="1334" alt="A mother holding her baby during a Maui sunrise session" loading="lazy">
+<img class="session-carousel-slide" src="assets/Sunrise-IG-7.jpg" width="2000" height="1334" alt="Parents playing together in the waves at sunrise" loading="lazy">
+<img class="session-carousel-slide" src="assets/Sunrise-Maui-Mini-Session.jpg" width="2000" height="1331" alt="A family portrait during a Maui morning mini session" loading="lazy">
+<img class="session-carousel-slide" src="assets/maui-mini-session-morning.jpg" width="2000" height="1334" alt="A multigenerational family portrait beside the ocean in Wailea" loading="lazy">
+</div>
+<button class="session-carousel-arrow session-carousel-prev" type="button" aria-label="Previous Morning Mini Session photograph">&lsaquo;</button>
+<button class="session-carousel-arrow session-carousel-next" type="button" aria-label="Next Morning Mini Session photograph">&rsaquo;</button>
+<div class="session-carousel-status" aria-live="polite">1 / 6</div>
+</div>
 <div class="session-card-body">
 <div class="session-card-meta">20 MIN &middot; 50+ IMAGES</div>
 <h3>Morning Mini Session</h3>
@@ -95,7 +108,20 @@
 </div>
 
 <div class="session-card">
-<div class="session-card-image"><span class="session-card-price">$299</span><img src="assets/maui-mini-session-sunset2.jpg" width="2000" height="1331" alt="A sunset portrait beside the ocean during a Maui Mini Session" loading="lazy"></div>
+<div class="session-card-image session-carousel" data-session-carousel aria-label="Sunset Mini Session sample photographs">
+<span class="session-card-price">$299</span>
+<div class="session-carousel-track">
+<img class="session-carousel-slide active" src="assets/maui-mini-session-sunset2.jpg" width="2000" height="1331" alt="A sunset portrait beside the ocean during a Maui Mini Session" loading="lazy">
+<img class="session-carousel-slide" src="assets/Maui-Mini-Session-Maui Mini Session-9.jpg" width="1350" height="898" alt="A child in the foreground during a Maui family sunset session" loading="lazy">
+<img class="session-carousel-slide" src="assets/Maui-mini-session-kids.jpg" width="2000" height="1331" alt="Two children smiling together beside the ocean in Maui" loading="lazy">
+<img class="session-carousel-slide" src="assets/maui-mini-session-sunset3.jpg" width="2000" height="1331" alt="A family laughing together in the ocean at sunset" loading="lazy">
+<img class="session-carousel-slide" src="assets/maui-mini-session-tree.jpg" width="2000" height="1331" alt="A family playing around a fallen tree during a Maui beach session" loading="lazy">
+<img class="session-carousel-slide" src="assets/maui-mini-session-wailea.jpg" width="2000" height="1331" alt="A couple sharing a candid moment on a Wailea beach" loading="lazy">
+</div>
+<button class="session-carousel-arrow session-carousel-prev" type="button" aria-label="Previous Sunset Mini Session photograph">&lsaquo;</button>
+<button class="session-carousel-arrow session-carousel-next" type="button" aria-label="Next Sunset Mini Session photograph">&rsaquo;</button>
+<div class="session-carousel-status" aria-live="polite">1 / 6</div>
+</div>
 <div class="session-card-body">
 <div class="session-card-meta">20 MIN &middot; 50+ IMAGES</div>
 <h3>Sunset Mini Session</h3>
@@ -105,7 +131,15 @@
 </div>
 
 <div class="session-card">
-<div class="session-card-image"><span class="session-card-price">$299</span><img src="assets/road-to-hana-session.jpg" width="2000" height="1331" alt="A portrait on a tropical beach during a Road to Hana session" loading="lazy"></div>
+<div class="session-card-image session-carousel" data-session-carousel aria-label="Road to Hana Session sample photographs">
+<span class="session-card-price">$299</span>
+<div class="session-carousel-track">
+<img class="session-carousel-slide active" src="assets/turquoise-water-session2.jpg" width="2000" height="1329" alt="A portrait in turquoise Maui water during a Road to Hana session" loading="lazy">
+</div>
+<button class="session-carousel-arrow session-carousel-prev" type="button" aria-label="Previous Road to Hana Session photograph">&lsaquo;</button>
+<button class="session-carousel-arrow session-carousel-next" type="button" aria-label="Next Road to Hana Session photograph">&rsaquo;</button>
+<div class="session-carousel-status" aria-live="polite">1 / 1</div>
+</div>
 <div class="session-card-body">
 <div class="session-card-meta">20 MIN &middot; 50+ IMAGES</div>
 <h3>Road to Hana Session</h3>
@@ -170,6 +204,7 @@ stripePublishableKey: 'pk_live_51N35QgELtvKYuvgHsYqD3hfJAAAE0CB7WgEh8nhYt1AgzceJ
 document.getElementById('year').textContent = new Date().getFullYear();
 </script>
 <script src="assets/booking-widget.js"></script>
+<script src="assets/session-carousel.js"></script>
 <script>
 (function () {
   var slides = document.querySelectorAll('.hero-slide');
