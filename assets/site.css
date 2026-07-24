@@ -15,6 +15,7 @@
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
+[id]{scroll-margin-top:92px}
 body{
   margin:0;
   font-family:var(--sans);
@@ -111,6 +112,10 @@ h1,h2,h3{font-family:var(--serif);font-weight:500;margin:0;color:var(--ink)}
 .sessions{padding:80px 5% 60px}
 .section-head{max-width:640px;margin:0 auto 44px;text-align:center}
 .section-head h2{font-size:clamp(28px,4vw,38px);margin-top:10px}
+.section-head p{
+  margin:14px auto 0;max-width:590px;
+  font:400 15px/1.65 var(--sans);color:var(--ink-soft);
+}
 .session-grid{
   display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
   gap:26px;max-width:1180px;margin:0 auto;
@@ -182,16 +187,36 @@ h1,h2,h3{font-family:var(--serif);font-weight:500;margin:0;color:var(--ink)}
   .session-carousel-slide{transition:none}
 }
 
+/* frequently asked questions */
+.faq{
+  padding:76px 5%;
+  background:var(--blush);
+  border-top:1px solid var(--line);
+}
+.faq-grid{
+  max-width:1000px;margin:0 auto;
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:16px;
+}
+.faq article{
+  padding:25px 26px;
+  background:rgba(255,253,251,.82);
+  border:1px solid rgba(255,255,255,.75);
+  border-radius:16px;
+}
+.faq h3{font-size:21px;line-height:1.2;margin-bottom:9px}
+.faq article p{margin:0;font:400 14px/1.65 var(--sans);color:var(--ink-soft)}
+@media (max-width:720px){
+  .faq-grid{grid-template-columns:1fr}
+}
+
 /* reviews */
 .reviews{
   padding:72px 5%;background:var(--white);
   border-top:1px solid var(--line);border-bottom:1px solid var(--line);
 }
 .reviews .section-head{margin-bottom:32px}
-.reviews .section-head p{
-  margin:14px auto 0;max-width:540px;
-  font:400 15px/1.6 var(--sans);color:var(--ink-soft);
-}
+.reviews .section-head p{max-width:540px}
 .reviews [class*="elfsight-app-"]{max-width:1180px;margin:0 auto}
 
 /* family */
