@@ -1,4 +1,4 @@
-/* Wailea Photo — shared site behavior (menu, reveal animation, counters, sliders) */
+/* Maui Mini Session — shared site behavior (menu, reveal animation, counters, sliders) */
 (function(){
   const menu = document.querySelector('.menu');
   const openBtn = document.querySelector('.menu-open-btn');

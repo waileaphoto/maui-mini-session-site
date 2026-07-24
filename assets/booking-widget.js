@@ -1,4 +1,4 @@
-// Wailea Photo booking widget — vanilla JS, no build step, no npm dependency.
+// Maui Mini Session booking widget — vanilla JS, no build step, no npm dependency.
 // Loads Stripe.js from Stripe's own CDN at runtime (a normal <script> include,
 // same as any other third-party embed — not an npm package).
 //
