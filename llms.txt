@@ -1,0 +1,25 @@
+# Maui Mini Session
+
+> Express 20-minute portrait sessions in Wailea and South Maui, from $299. Run by the Balter family, the same family behind Wailea Photo (https://waileaphoto.com).
+
+## About
+- Address: 3704 S Kihei Rd, Kihei, HI 96753
+- Phone: +1-808-298-5188
+- Email: info@mauiminisession.com
+- Instagram: https://www.instagram.com/mauiminisession
+- Facebook: https://www.facebook.com/mauiminisession
+- Family-run for 25+ years; every session shot by the Balter family's own team, never an outside contractor. Images are naturally edited (no AI editing), delivered in 24-48 hours.
+- Parent studio: Wailea Photo (https://waileaphoto.com) - full-length family, couples and wedding photography.
+
+## Sessions & Pricing
+Each session is 20 minutes, includes 25+ edited high-resolution images, and covers up to five people (additional guests priced on the live booking calendar).
+- Morning Mini Session - from $299. Soft morning light, cooler temperatures, quieter beach.
+- Sunset Mini Session - from $299. Warm evening light and ocean color.
+- Turquoise Mini Session - from $299. Bright water and tropical color.
+Live calendar and current pricing: https://mauiminisession.com/#sessions
+
+## FAQ
+https://mauiminisession.com/#faq
+
+## Full Content
+See /llms-full.txt for a fuller text summary of this site.
