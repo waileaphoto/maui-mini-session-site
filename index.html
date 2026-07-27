@@ -429,7 +429,7 @@ window.WBW_CONFIG = {
 apiBase: 'https://wailea-booking-engine.onrender.com',
 stripePublishableKey: 'pk_live_51N35QgELtvKYuvgHsYqD3hfJAAAE0CB7WgEh8nhYt1AgzceJDpAV82RzYMm09P1l96kOjtRf52hYykmwanv10yBZ00PBeaLUg5',
 };
-document.getElementById('year').textContent = new Date().getFullYear();
+document.getElementById('year') && (document.getElementById('year').textContent = new Date().getFullYear());
 </script>
 <script src="assets/booking-widget.js?v=6"></script>
 <script src="assets/session-carousel.js"></script>
