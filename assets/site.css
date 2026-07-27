@@ -259,3 +259,12 @@ footer p{font:400 14px/1.6 var(--sans);color:var(--ink-soft);margin:0 0 8px}
 @media (max-width:720px){
   .footer-grid{grid-template-columns:1fr;gap:26px}
 }
+
+
+/* Elfsight combined reviews badge (Reviews section) — restyled to match site theme */
+.eapps-all-in-one-reviews-befd2998-eb1b-4c78-88ce-bea5dc308fba-custom-css-root .es-badge-container{background:var(--cream);border:1px solid var(--line);border-radius:14px;box-shadow:none;transition:border-color .25s ease}
+.eapps-all-in-one-reviews-befd2998-eb1b-4c78-88ce-bea5dc308fba-custom-css-root .es-badge-container:hover{border-color:var(--blush-deep)}
+.eapps-all-in-one-reviews-befd2998-eb1b-4c78-88ce-bea5dc308fba-custom-css-root .es-card-badge-container{font-family:var(--sans)}
+.eapps-all-in-one-reviews-befd2998-eb1b-4c78-88ce-bea5dc308fba-custom-css-root .es-badge-label{font-family:var(--serif);font-weight:600;font-size:19px;letter-spacing:.01em;text-transform:none;color:var(--ink)}
+.eapps-all-in-one-reviews-befd2998-eb1b-4c78-88ce-bea5dc308fba-custom-css-root .es-rating-value{font-family:var(--serif);color:var(--ink);font-weight:600;font-size:30px}
+.eapps-all-in-one-reviews-befd2998-eb1b-4c78-88ce-bea5dc308fba-custom-css-root .es-badge-reviews-count{font-family:var(--sans);font-weight:600;color:var(--blush-deep)}
