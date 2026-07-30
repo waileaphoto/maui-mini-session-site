@@ -11,6 +11,7 @@
   const CONFIG = window.WBW_CONFIG || {};
   const API_BASE = CONFIG.apiBase || 'http://localhost:4242';
   const STRIPE_PK = CONFIG.stripePublishableKey || '';
+  const analytics = () => window.MMSAnalytics || null;
 
   const ADDON_DEFS = [
     { slug: 'film', label: 'Real film (Kodak/FujiFilm)' },
@@ -240,6 +241,7 @@
         slug, name, month: requestedMonth, selectedDate: null, selectedSlot: null,
         preselect: requestedDate ? { date: requestedDate, startTime: preselect.startTime || null } : null,
         bookingId: null, bookingReference: null, clientSecret: null,
+        purchaseTracked: false,
       };
       ADDON_DEFS.forEach((addon) => {
         const applies = !addon.sessionSlugs || addon.sessionSlugs.includes(slug);
@@ -248,10 +250,23 @@
       });
       this.specialRequestsInput.value = '';
       this.floristContactCheckbox.checked = false;
+      if (analytics()?.inferredReferral) this.hearAboutInput.value = analytics().inferredReferral;
       this.titleEl.textContent = name;
       this.showStep('date');
       this.dateError.textContent = '';
       this.overlay.hidden = false;
+      analytics()?.track('ViewContent', {
+        content_name: name,
+        content_category: 'Maui Mini Session',
+        content_ids: [slug],
+        content_type: 'product',
+        value: 299,
+        currency: 'USD',
+      });
+      analytics()?.trackCustom('BookingWidgetOpen', {
+        session_type: slug,
+        session_name: name,
+      });
       this.loadMonth();
     }
 
@@ -382,7 +397,7 @@
       }
     }
 
-    async goToPayment() {
+    async goToPayment(event) {
       this.detailsError.textContent = '';
       if (!this.nameInput.value || !this.emailInput.value) {
         this.detailsError.textContent = 'Name and email are required.';
@@ -419,6 +434,18 @@
         this.state.bookingReference = result.booking.booking_reference;
         this.state.clientSecret = result.stripe.clientSecret;
         this.state.quote = result.quote;
+        this.state.totalPriceCents = result.booking.total_price_cents;
+
+        analytics()?.track('InitiateCheckout', {
+          content_name: this.state.name,
+          content_category: 'Maui Mini Session',
+          content_ids: [this.state.slug],
+          content_type: 'product',
+          value: result.booking.total_price_cents / 100,
+          currency: 'USD',
+          num_items: 1,
+          booking_reference: result.booking.booking_reference,
+        });
 
         this.paymentSummary.innerHTML = '';
         this.paymentSummary.appendChild(el('div', { class: 'wbw-quote-row wbw-total' }, [
@@ -447,6 +474,14 @@
       this.paymentElement = this.elements.create('payment');
       this.cardElementWrap.innerHTML = '';
       this.paymentElement.mount(this.cardElementWrap);
+      analytics()?.track('AddPaymentInfo', {
+        content_name: this.state.name,
+        content_ids: [this.state.slug],
+        content_type: 'product',
+        value: this.state.totalPriceCents ? this.state.totalPriceCents / 100 : undefined,
+        currency: 'USD',
+        booking_reference: this.state.bookingReference,
+      });
     }
 
     async submitPayment() {
@@ -473,6 +508,31 @@
     }
 
     showSuccess(paymentIntent) {
+      if (!this.state.purchaseTracked && ['succeeded', 'processing'].includes(paymentIntent.status)) {
+        const value = this.state.totalPriceCents
+          ? this.state.totalPriceCents / 100
+          : this.state.lastQuote?.totalCents
+            ? this.state.lastQuote.totalCents / 100
+            : 299;
+        const purchaseId = `purchase-${this.state.bookingReference}`;
+        analytics()?.track('Purchase', {
+          content_name: this.state.name,
+          content_category: 'Maui Mini Session',
+          content_ids: [this.state.slug],
+          content_type: 'product',
+          value,
+          currency: 'USD',
+          num_items: 1,
+          booking_reference: this.state.bookingReference,
+        }, purchaseId);
+        analytics()?.track('Schedule', {
+          content_name: this.state.name,
+          session_type: this.state.slug,
+          booking_reference: this.state.bookingReference,
+          scheduled_date: this.state.selectedDate,
+        }, `schedule-${this.state.bookingReference}`);
+        this.state.purchaseTracked = true;
+      }
       this.successBody.innerHTML = '';
       this.successBody.append(
         el('div', { class: 'wbw-success-icon' }, ['✓']),
