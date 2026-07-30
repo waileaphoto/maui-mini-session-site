@@ -13,6 +13,16 @@
   const STRIPE_PK = CONFIG.stripePublishableKey || '';
   const analytics = () => window.MMSAnalytics || null;
 
+  function inferredReferralFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const source = String(params.get('utm_source') || '').toLowerCase();
+    const medium = String(params.get('utm_medium') || '').toLowerCase();
+    if (source.includes('instagram')) return medium.includes('paid') ? 'Instagram Ad' : 'Instagram Post';
+    if (source.includes('facebook') || params.get('fbclid')) return medium.includes('group') ? 'Facebook Group' : 'Facebook Ad';
+    if (source.includes('google')) return medium.includes('paid') || medium.includes('cpc') ? 'Google Ad' : 'Google Search';
+    return '';
+  }
+
   const ADDON_DEFS = [
     { slug: 'film', label: 'Real film (Kodak/FujiFilm)' },
     { slug: 'bw', label: 'Classic Black & White add-on' },
@@ -250,7 +260,8 @@
       });
       this.specialRequestsInput.value = '';
       this.floristContactCheckbox.checked = false;
-      if (analytics()?.inferredReferral) this.hearAboutInput.value = analytics().inferredReferral;
+      const inferredReferral = analytics()?.inferredReferral || inferredReferralFromUrl();
+      if (inferredReferral) this.hearAboutInput.value = inferredReferral;
       this.titleEl.textContent = name;
       this.showStep('date');
       this.dateError.textContent = '';
