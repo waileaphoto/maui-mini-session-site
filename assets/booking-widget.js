@@ -30,8 +30,8 @@
     {
       slug: 'double-sunset',
       label: 'Special-Double your session time to include Last Half Sunset',
-      priceLabel: '$99',
-      sessionSlugs: ['first-half-sunset'],
+      priceLabel: '$199',
+      sessionSlugs: ['mini-sunset'],
     },
   ];
 
