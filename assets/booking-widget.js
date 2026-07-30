@@ -215,11 +215,15 @@
     buildPaymentStep() {
       const step = el('div', { class: 'wbw-step', hidden: 'hidden' });
       this.paymentSummary = el('div', { class: 'wbw-quote' });
+      this.holdNotice = el('div', { class: 'wbw-quote-note', style: 'margin:12px 0;font-weight:700;' });
+      this.holdCountdown = el('div', { class: 'wbw-due-today', style: 'margin-bottom:14px;' });
       this.cardElementWrap = el('div', { id: 'wbw-card-element' });
       this.payError = el('div', { class: 'wbw-error' });
       this.payBtn = el('button', { class: 'wbw-btn', onclick: () => this.submitPayment() }, [`Pay ${fmtDollars(DEFAULT_DEPOSIT_CENTS)} Deposit`]);
       step.append(
         this.paymentSummary,
+        this.holdNotice,
+        this.holdCountdown,
         this.cardElementWrap,
         this.payError,
         el('div', { style: 'display:flex;gap:10px;' }, [
@@ -253,6 +257,7 @@
         bookingId: null, bookingReference: null, clientSecret: null,
         purchaseTracked: false,
       };
+      clearInterval(this.holdTimer);
       ADDON_DEFS.forEach((addon) => {
         const applies = !addon.sessionSlugs || addon.sessionSlugs.includes(slug);
         this.addonRows[addon.slug].hidden = !applies;
@@ -282,7 +287,35 @@
     }
 
     close() {
+      clearInterval(this.holdTimer);
       if (this.overlay) this.overlay.hidden = true;
+    }
+
+    startHoldCountdown(expiresAt, resumed) {
+      clearInterval(this.holdTimer);
+      this.state.holdExpiresAt = expiresAt;
+      this.state.holdExpired = false;
+      this.payBtn.disabled = false;
+      this.payError.textContent = '';
+      this.holdNotice.textContent = resumed
+        ? 'You already started this booking. Continue payment below—your original reservation is still active.'
+        : 'This session is reserved for you while you complete payment.';
+      const update = () => {
+        const remainingSeconds = Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 1000));
+        const minutes = Math.floor(remainingSeconds / 60);
+        const seconds = String(remainingSeconds % 60).padStart(2, '0');
+        this.holdCountdown.textContent = remainingSeconds
+          ? `Time remaining to complete payment: ${minutes}:${seconds}`
+          : 'This payment hold has expired.';
+        if (!remainingSeconds) {
+          clearInterval(this.holdTimer);
+          this.state.holdExpired = true;
+          this.payBtn.disabled = true;
+          this.payError.textContent = 'Your 15-minute hold expired. Go back and select the session again to start a new booking.';
+        }
+      };
+      update();
+      this.holdTimer = setInterval(update, 1000);
     }
 
     changeMonth(delta) {
@@ -446,6 +479,7 @@
         this.state.clientSecret = result.stripe.clientSecret;
         this.state.quote = result.quote;
         this.state.totalPriceCents = result.booking.total_price_cents;
+        this.startHoldCountdown(result.holdExpiresAt, result.resumed === true);
 
         analytics()?.track('InitiateCheckout', {
           content_name: this.state.name,
@@ -497,6 +531,10 @@
 
     async submitPayment() {
       this.payError.textContent = '';
+      if (this.state.holdExpired) {
+        this.payError.textContent = 'Your 15-minute hold expired. Go back and select the session again.';
+        return;
+      }
       this.payBtn.disabled = true;
       this.payBtn.innerHTML = '<span class="wbw-spinner"></span> Processing…';
       try {
@@ -519,6 +557,7 @@
     }
 
     showSuccess(paymentIntent) {
+      clearInterval(this.holdTimer);
       if (!this.state.purchaseTracked && ['succeeded', 'processing'].includes(paymentIntent.status)) {
         const value = this.state.totalPriceCents
           ? this.state.totalPriceCents / 100
