@@ -11,17 +11,6 @@
   const CONFIG = window.WBW_CONFIG || {};
   const API_BASE = CONFIG.apiBase || 'http://localhost:4242';
   const STRIPE_PK = CONFIG.stripePublishableKey || '';
-  const analytics = () => window.MMSAnalytics || null;
-
-  function inferredReferralFromUrl() {
-    const params = new URLSearchParams(window.location.search);
-    const source = String(params.get('utm_source') || '').toLowerCase();
-    const medium = String(params.get('utm_medium') || '').toLowerCase();
-    if (source.includes('instagram')) return medium.includes('paid') ? 'Instagram Ad' : 'Instagram Post';
-    if (source.includes('facebook') || params.get('fbclid')) return medium.includes('group') ? 'Facebook Group' : 'Facebook Ad';
-    if (source.includes('google')) return medium.includes('paid') || medium.includes('cpc') ? 'Google Ad' : 'Google Search';
-    return '';
-  }
 
   const ADDON_DEFS = [
     { slug: 'film', label: 'Real film (Kodak/FujiFilm)' },
@@ -30,8 +19,8 @@
     {
       slug: 'double-sunset',
       label: 'Special-Double your session time to include Last Half Sunset',
-      priceLabel: '$199',
-      sessionSlugs: ['mini-sunset'],
+      priceLabel: '$99',
+      sessionSlugs: ['first-half-sunset'],
     },
   ];
 
@@ -179,6 +168,11 @@
 
       this.policyBox = el('div', { class: 'wbw-policy-box' }, POLICY_LINES.map((t) => el('p', {}, [t])));
       this.policyCheckbox = el('input', { type: 'checkbox' });
+      this.sunrisePunctualityCheckbox = el('input', { type: 'checkbox', required: true });
+      const sunrisePunctualityAgreement = el('label', { class: 'wbw-policy-agree' }, [
+        this.sunrisePunctualityCheckbox,
+        ' I acknowledge that I must arrive on time. Sessions are not extended due to tardiness, late sleeping teenagers or slow valet service.',
+      ]);
 
       this.quoteBox = el('div', { class: 'wbw-quote' });
       this.detailsError = el('div', { class: 'wbw-error' });
@@ -201,6 +195,7 @@
           el('label', {}, ['Session Policies']),
           this.policyBox,
           el('label', { class: 'wbw-policy-agree' }, [this.policyCheckbox, ' I have read and agree to the session policies above.']),
+          ...(this.state.slug === 'sunrise-max' ? [sunrisePunctualityAgreement] : []),
         ]),
         this.quoteBox,
         this.detailsError,
@@ -215,15 +210,11 @@
     buildPaymentStep() {
       const step = el('div', { class: 'wbw-step', hidden: 'hidden' });
       this.paymentSummary = el('div', { class: 'wbw-quote' });
-      this.holdNotice = el('div', { class: 'wbw-quote-note', style: 'margin:12px 0;font-weight:700;' });
-      this.holdCountdown = el('div', { class: 'wbw-due-today', style: 'margin-bottom:14px;' });
       this.cardElementWrap = el('div', { id: 'wbw-card-element' });
       this.payError = el('div', { class: 'wbw-error' });
       this.payBtn = el('button', { class: 'wbw-btn', onclick: () => this.submitPayment() }, [`Pay ${fmtDollars(DEFAULT_DEPOSIT_CENTS)} Deposit`]);
       step.append(
         this.paymentSummary,
-        this.holdNotice,
-        this.holdCountdown,
         this.cardElementWrap,
         this.payError,
         el('div', { style: 'display:flex;gap:10px;' }, [
@@ -255,9 +246,7 @@
         slug, name, month: requestedMonth, selectedDate: null, selectedSlot: null,
         preselect: requestedDate ? { date: requestedDate, startTime: preselect.startTime || null } : null,
         bookingId: null, bookingReference: null, clientSecret: null,
-        purchaseTracked: false,
       };
-      clearInterval(this.holdTimer);
       ADDON_DEFS.forEach((addon) => {
         const applies = !addon.sessionSlugs || addon.sessionSlugs.includes(slug);
         this.addonRows[addon.slug].hidden = !applies;
@@ -265,57 +254,15 @@
       });
       this.specialRequestsInput.value = '';
       this.floristContactCheckbox.checked = false;
-      const inferredReferral = analytics()?.inferredReferral || inferredReferralFromUrl();
-      if (inferredReferral) this.hearAboutInput.value = inferredReferral;
       this.titleEl.textContent = name;
       this.showStep('date');
       this.dateError.textContent = '';
       this.overlay.hidden = false;
-      analytics()?.track('ViewContent', {
-        content_name: name,
-        content_category: 'Maui Mini Session',
-        content_ids: [slug],
-        content_type: 'product',
-        value: 299,
-        currency: 'USD',
-      });
-      analytics()?.trackCustom('BookingWidgetOpen', {
-        session_type: slug,
-        session_name: name,
-      });
       this.loadMonth();
     }
 
     close() {
-      clearInterval(this.holdTimer);
       if (this.overlay) this.overlay.hidden = true;
-    }
-
-    startHoldCountdown(expiresAt, resumed) {
-      clearInterval(this.holdTimer);
-      this.state.holdExpiresAt = expiresAt;
-      this.state.holdExpired = false;
-      this.payBtn.disabled = false;
-      this.payError.textContent = '';
-      this.holdNotice.textContent = resumed
-        ? 'You already started this booking. Continue payment below—your original reservation is still active.'
-        : 'This session is reserved for you while you complete payment.';
-      const update = () => {
-        const remainingSeconds = Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 1000));
-        const minutes = Math.floor(remainingSeconds / 60);
-        const seconds = String(remainingSeconds % 60).padStart(2, '0');
-        this.holdCountdown.textContent = remainingSeconds
-          ? `Time remaining to complete payment: ${minutes}:${seconds}`
-          : 'This payment hold has expired.';
-        if (!remainingSeconds) {
-          clearInterval(this.holdTimer);
-          this.state.holdExpired = true;
-          this.payBtn.disabled = true;
-          this.payError.textContent = 'Your 15-minute hold expired. Go back and select the session again to start a new booking.';
-        }
-      };
-      update();
-      this.holdTimer = setInterval(update, 1000);
     }
 
     changeMonth(delta) {
@@ -441,7 +388,7 @@
       }
     }
 
-    async goToPayment(event) {
+    async goToPayment() {
       this.detailsError.textContent = '';
       if (!this.nameInput.value || !this.emailInput.value) {
         this.detailsError.textContent = 'Name and email are required.';
@@ -453,6 +400,10 @@
       }
       if (!this.policyCheckbox.checked) {
         this.detailsError.textContent = 'Please agree to the session policies to continue.';
+        return;
+      }
+      if (this.state.slug === 'sunrise-max' && !this.sunrisePunctualityCheckbox.checked) {
+        this.detailsError.textContent = 'Please acknowledge the Sunrise session arrival-time policy to continue.';
         return;
       }
       const btn = event?.target;
@@ -468,6 +419,7 @@
           client: { name: this.nameInput.value, email: this.emailInput.value, phone: this.phoneInput.value, smsOptIn: this.smsOptInCheckbox.checked },
           questionnaire: {
             agreedToPolicies: this.policyCheckbox.checked,
+            acknowledgedSunrisePunctuality: this.state.slug === 'sunrise-max' ? this.sunrisePunctualityCheckbox.checked : undefined,
             hearAboutUs: this.hearAboutInput.value,
             celebrating: this.celebratingInput.value || undefined,
             specialRequests: this.specialRequestsInput.value || undefined,
@@ -478,19 +430,6 @@
         this.state.bookingReference = result.booking.booking_reference;
         this.state.clientSecret = result.stripe.clientSecret;
         this.state.quote = result.quote;
-        this.state.totalPriceCents = result.booking.total_price_cents;
-        this.startHoldCountdown(result.holdExpiresAt, result.resumed === true);
-
-        analytics()?.track('InitiateCheckout', {
-          content_name: this.state.name,
-          content_category: 'Maui Mini Session',
-          content_ids: [this.state.slug],
-          content_type: 'product',
-          value: result.booking.total_price_cents / 100,
-          currency: 'USD',
-          num_items: 1,
-          booking_reference: result.booking.booking_reference,
-        });
 
         this.paymentSummary.innerHTML = '';
         this.paymentSummary.appendChild(el('div', { class: 'wbw-quote-row wbw-total' }, [
@@ -519,22 +458,10 @@
       this.paymentElement = this.elements.create('payment');
       this.cardElementWrap.innerHTML = '';
       this.paymentElement.mount(this.cardElementWrap);
-      analytics()?.track('AddPaymentInfo', {
-        content_name: this.state.name,
-        content_ids: [this.state.slug],
-        content_type: 'product',
-        value: this.state.totalPriceCents ? this.state.totalPriceCents / 100 : undefined,
-        currency: 'USD',
-        booking_reference: this.state.bookingReference,
-      });
     }
 
     async submitPayment() {
       this.payError.textContent = '';
-      if (this.state.holdExpired) {
-        this.payError.textContent = 'Your 15-minute hold expired. Go back and select the session again.';
-        return;
-      }
       this.payBtn.disabled = true;
       this.payBtn.innerHTML = '<span class="wbw-spinner"></span> Processing…';
       try {
@@ -557,32 +484,6 @@
     }
 
     showSuccess(paymentIntent) {
-      clearInterval(this.holdTimer);
-      if (!this.state.purchaseTracked && ['succeeded', 'processing'].includes(paymentIntent.status)) {
-        const value = this.state.totalPriceCents
-          ? this.state.totalPriceCents / 100
-          : this.state.lastQuote?.totalCents
-            ? this.state.lastQuote.totalCents / 100
-            : 299;
-        const purchaseId = `purchase-${this.state.bookingReference}`;
-        analytics()?.track('Purchase', {
-          content_name: this.state.name,
-          content_category: 'Maui Mini Session',
-          content_ids: [this.state.slug],
-          content_type: 'product',
-          value,
-          currency: 'USD',
-          num_items: 1,
-          booking_reference: this.state.bookingReference,
-        }, purchaseId);
-        analytics()?.track('Schedule', {
-          content_name: this.state.name,
-          session_type: this.state.slug,
-          booking_reference: this.state.bookingReference,
-          scheduled_date: this.state.selectedDate,
-        }, `schedule-${this.state.bookingReference}`);
-        this.state.purchaseTracked = true;
-      }
       this.successBody.innerHTML = '';
       this.successBody.append(
         el('div', { class: 'wbw-success-icon' }, ['✓']),
