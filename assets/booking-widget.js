@@ -38,12 +38,7 @@
 
   const DEFAULT_DEPOSIT_CENTS = 4900;
   // Keep in sync with DEPOSIT_CENTS_BY_SLUG in booking-engine/src/routes/bookings.js.
-  const DEPOSIT_CENTS_BY_SLUG = {
-    'sunrise-max': 1000,
-    'mini-morning': 1000,
-    'mini-sunset': 1000,
-    'road-to-hana': 1000,
-  };
+  const DEPOSIT_CENTS_BY_SLUG = { 'mini-morning': 1000, 'mini-sunset': 1000, 'road-to-hana': 1000 };
   function depositCentsFor(slug) {
     return DEPOSIT_CENTS_BY_SLUG[slug] ?? DEFAULT_DEPOSIT_CENTS;
   }
@@ -87,6 +82,15 @@
 
   function fmtDollars(cents) {
     return `$${(cents / 100).toFixed(2)}`;
+  }
+
+  function fmtTime12(value) {
+    const [hourText, minute = '00'] = String(value || '').split(':');
+    const hour = Number(hourText);
+    if (!Number.isInteger(hour) || hour < 0 || hour > 23) return value || '';
+    const suffix = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minute} ${suffix}`;
   }
 
   class BookingWidget {
@@ -158,7 +162,7 @@
         el('option', { value: '' }, ['Select one']),
         ...HEAR_ABOUT_OPTIONS.map((o) => el('option', { value: o }, [o])),
       ]);
-      this.celebratingInput = el('input', { type: 'text', placeholder: 'Anniversary, birthday, reunion… (optional)' });
+      this.celebratingInput = el('input', { type: 'text', placeholder: 'Anniversary, Honeymoon, Maternity, Graduation… (optional)' });
       this.specialRequestsInput = el('textarea', {
         rows: '3',
         maxlength: '2000',
@@ -168,11 +172,6 @@
 
       this.policyBox = el('div', { class: 'wbw-policy-box' }, POLICY_LINES.map((t) => el('p', {}, [t])));
       this.policyCheckbox = el('input', { type: 'checkbox' });
-      this.sunrisePunctualityCheckbox = el('input', { type: 'checkbox', required: true });
-      const sunrisePunctualityAgreement = el('label', { class: 'wbw-policy-agree' }, [
-        this.sunrisePunctualityCheckbox,
-        ' I acknowledge that I must arrive on time. Sessions are not extended due to tardiness, late sleeping teenagers or slow valet service.',
-      ]);
 
       this.quoteBox = el('div', { class: 'wbw-quote' });
       this.detailsError = el('div', { class: 'wbw-error' });
@@ -189,13 +188,12 @@
         el('div', { class: 'wbw-field' }, [el('label', {}, ['NOTES / SPECIAL REQUESTS']), this.specialRequestsInput]),
         el('label', { class: 'wbw-policy-agree' }, [
           this.floristContactCheckbox,
-          ' Have Mya, our florist, contact you for flowers?',
+          ' Have Mya our florist contact you for flowers? (48 hr min lead time required)',
         ]),
         el('div', { class: 'wbw-field' }, [
           el('label', {}, ['Session Policies']),
           this.policyBox,
           el('label', { class: 'wbw-policy-agree' }, [this.policyCheckbox, ' I have read and agree to the session policies above.']),
-          ...(this.state.slug === 'sunrise-max' ? [sunrisePunctualityAgreement] : []),
         ]),
         this.quoteBox,
         this.detailsError,
@@ -210,11 +208,15 @@
     buildPaymentStep() {
       const step = el('div', { class: 'wbw-step', hidden: 'hidden' });
       this.paymentSummary = el('div', { class: 'wbw-quote' });
+      this.holdNotice = el('div', { class: 'wbw-quote-note', style: 'margin:12px 0;font-weight:700;' });
+      this.holdCountdown = el('div', { class: 'wbw-due-today', style: 'margin-bottom:14px;' });
       this.cardElementWrap = el('div', { id: 'wbw-card-element' });
       this.payError = el('div', { class: 'wbw-error' });
       this.payBtn = el('button', { class: 'wbw-btn', onclick: () => this.submitPayment() }, [`Pay ${fmtDollars(DEFAULT_DEPOSIT_CENTS)} Deposit`]);
       step.append(
         this.paymentSummary,
+        this.holdNotice,
+        this.holdCountdown,
         this.cardElementWrap,
         this.payError,
         el('div', { style: 'display:flex;gap:10px;' }, [
@@ -246,7 +248,9 @@
         slug, name, month: requestedMonth, selectedDate: null, selectedSlot: null,
         preselect: requestedDate ? { date: requestedDate, startTime: preselect.startTime || null } : null,
         bookingId: null, bookingReference: null, clientSecret: null,
+        purchased: false, abandonTracked: false,
       };
+      clearInterval(this.holdTimer);
       ADDON_DEFS.forEach((addon) => {
         const applies = !addon.sessionSlugs || addon.sessionSlugs.includes(slug);
         this.addonRows[addon.slug].hidden = !applies;
@@ -258,11 +262,43 @@
       this.showStep('date');
       this.dateError.textContent = '';
       this.overlay.hidden = false;
+      if (typeof window.waileaTrack === 'function') {
+        window.waileaTrack('booking_start', { booking_system: 'wailea', session_type: slug });
+      }
       this.loadMonth();
     }
 
     close() {
+      this.trackAbandoned('closed_widget');
+      clearInterval(this.holdTimer);
       if (this.overlay) this.overlay.hidden = true;
+    }
+
+    startHoldCountdown(expiresAt, resumed) {
+      clearInterval(this.holdTimer);
+      this.state.holdExpiresAt = expiresAt;
+      this.state.holdExpired = false;
+      this.payBtn.disabled = false;
+      this.payError.textContent = '';
+      this.holdNotice.textContent = resumed
+        ? 'You already started this booking. Continue payment below—your original reservation is still active.'
+        : 'This session is reserved for you while you complete payment.';
+      const update = () => {
+        const remainingSeconds = Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 1000));
+        const minutes = Math.floor(remainingSeconds / 60);
+        const seconds = String(remainingSeconds % 60).padStart(2, '0');
+        this.holdCountdown.textContent = remainingSeconds
+          ? `Time remaining to complete payment: ${minutes}:${seconds}`
+          : 'This payment hold has expired.';
+        if (!remainingSeconds) {
+          clearInterval(this.holdTimer);
+          this.state.holdExpired = true;
+          this.payBtn.disabled = true;
+          this.payError.textContent = 'Your 15-minute hold expired. Go back and select the session again to start a new booking.';
+        }
+      };
+      update();
+      this.holdTimer = setInterval(update, 1000);
     }
 
     changeMonth(delta) {
@@ -335,7 +371,7 @@
             Array.from(this.slotsWrap.children).forEach((c) => c.classList.remove('wbw-selected'));
             e.target.classList.add('wbw-selected');
           },
-        }, [`${slot.startTime} – ${slot.endTime}`]);
+        }, [`${fmtTime12(slot.startTime)} – ${fmtTime12(slot.endTime)}`]);
         this.slotsWrap.appendChild(btn);
         if (preferredStartTime && slot.startTime === preferredStartTime) btn.click();
       });
@@ -378,7 +414,7 @@
         el('div', { class: 'wbw-due-today-label' }, ['Due Today:']),
         el('div', { class: 'wbw-due-today-amount' }, [fmtDollars(depositCentsFor(this.state.slug))]),
       ]));
-      this.quoteBox.appendChild(el('div', { class: 'wbw-quote-note' }, ['Remainder due at your session.']));
+      this.quoteBox.appendChild(el('div', { class: 'wbw-quote-note' }, ['Balance due at end of session in Cash or Zelle only. If using Credit Card or Venmo a $30 fee will be added.']));
 
       function row(label, value, isTotal) {
         return el('div', { class: `wbw-quote-row${isTotal ? ' wbw-total' : ''}` }, [
@@ -388,7 +424,7 @@
       }
     }
 
-    async goToPayment() {
+    async goToPayment(event) {
       this.detailsError.textContent = '';
       if (!this.nameInput.value || !this.emailInput.value) {
         this.detailsError.textContent = 'Name and email are required.';
@@ -400,10 +436,6 @@
       }
       if (!this.policyCheckbox.checked) {
         this.detailsError.textContent = 'Please agree to the session policies to continue.';
-        return;
-      }
-      if (this.state.slug === 'sunrise-max' && !this.sunrisePunctualityCheckbox.checked) {
-        this.detailsError.textContent = 'Please acknowledge the Sunrise session arrival-time policy to continue.';
         return;
       }
       const btn = event?.target;
@@ -419,7 +451,6 @@
           client: { name: this.nameInput.value, email: this.emailInput.value, phone: this.phoneInput.value, smsOptIn: this.smsOptInCheckbox.checked },
           questionnaire: {
             agreedToPolicies: this.policyCheckbox.checked,
-            acknowledgedSunrisePunctuality: this.state.slug === 'sunrise-max' ? this.sunrisePunctualityCheckbox.checked : undefined,
             hearAboutUs: this.hearAboutInput.value,
             celebrating: this.celebratingInput.value || undefined,
             specialRequests: this.specialRequestsInput.value || undefined,
@@ -430,10 +461,23 @@
         this.state.bookingReference = result.booking.booking_reference;
         this.state.clientSecret = result.stripe.clientSecret;
         this.state.quote = result.quote;
+        this.state.totalPriceCents = result.booking.total_price_cents;
+        this.state.depositCents = result.booking.deposit_cents;
+        this.startHoldCountdown(result.holdExpiresAt, result.resumed === true);
+
+        if (typeof window.waileaTrack === 'function') {
+          window.waileaTrack('begin_checkout', {
+            currency: 'USD',
+            value: result.booking.total_price_cents / 100,
+            booking_system: 'wailea',
+            session_type: this.state.slug,
+            items: [{ item_id: this.state.slug, item_name: this.state.name, quantity: 1 }],
+          });
+        }
 
         this.paymentSummary.innerHTML = '';
         this.paymentSummary.appendChild(el('div', { class: 'wbw-quote-row wbw-total' }, [
-          el('span', {}, [`${this.state.name} — ${this.state.selectedDate} ${this.state.selectedSlot.startTime}`]),
+          el('span', {}, [`${this.state.name} — ${this.state.selectedDate} ${fmtTime12(this.state.selectedSlot.startTime)}`]),
           el('span', {}, [fmtDollars(result.booking.total_price_cents)]),
         ]));
         this.payBtn.textContent = `Pay ${fmtDollars(result.booking.deposit_cents)} Deposit`;
@@ -462,6 +506,10 @@
 
     async submitPayment() {
       this.payError.textContent = '';
+      if (this.state.holdExpired) {
+        this.payError.textContent = 'Your 15-minute hold expired. Go back and select the session again.';
+        return;
+      }
       this.payBtn.disabled = true;
       this.payBtn.innerHTML = '<span class="wbw-spinner"></span> Processing…';
       try {
@@ -472,11 +520,13 @@
         });
         if (error) {
           this.payError.textContent = error.message;
+          this.trackAbandoned('payment_declined');
           return;
         }
         this.showSuccess(paymentIntent);
       } catch (err) {
         this.payError.textContent = err.message;
+        this.trackAbandoned('payment_error');
       } finally {
         this.payBtn.disabled = false;
         this.payBtn.textContent = `Pay ${fmtDollars(depositCentsFor(this.state.slug))} Deposit`;
@@ -484,28 +534,105 @@
     }
 
     showSuccess(paymentIntent) {
+      clearInterval(this.holdTimer);
+      this.trackPurchase(paymentIntent);
       this.successBody.innerHTML = '';
       this.successBody.append(
         el('div', { class: 'wbw-success-icon' }, ['✓']),
         el('h3', {}, ['You’re booked!']),
         el('p', {}, [`Booking reference: ${this.state.bookingReference}`]),
-        el('p', {}, [`${this.state.name} — ${this.state.selectedDate} at ${this.state.selectedSlot.startTime} (Hawaii time).`]),
+        el('p', {}, [`${this.state.name} — ${this.state.selectedDate} at ${fmtTime12(this.state.selectedSlot.startTime)} (Hawaii time).`]),
         el('p', { class: 'wbw-quote-note' }, [`Payment status: ${paymentIntent.status}. A confirmation email is on its way once it's fully processed.`]),
         el('a', { class: 'wbw-btn', href: `${API_BASE}/api/bookings/${this.state.bookingId}/ics`, target: '_blank', style: 'display:block;margin-top:16px;text-decoration:none;' }, ['Add to Calendar']),
         el('button', { class: 'wbw-btn wbw-btn-secondary', style: 'margin-top:10px;', onclick: () => this.close() }, ['Done'])
       );
       this.showStep('success');
     }
+
+    // Fires the GA4 purchase event with the booking's real total value, so
+    // conversions show accurate revenue instead of $0. Value matches
+    // begin_checkout's value (full session price, not just today's deposit)
+    // for a consistent funnel. Only fires once per completed Stripe payment
+    // (called from showSuccess, which itself only runs after
+    // stripe.confirmPayment resolves without an error).
+    trackPurchase(paymentIntent) {
+      if (typeof window.waileaTrack !== 'function') return;
+      if (!paymentIntent || (paymentIntent.status !== 'succeeded' && paymentIntent.status !== 'processing')) return;
+      this.state.purchased = true;
+      const totalDollars = (this.state.totalPriceCents || 0) / 100;
+      window.waileaTrack('purchase', {
+        transaction_id: this.state.bookingReference || String(this.state.bookingId || paymentIntent.id || ''),
+        value: totalDollars,
+        currency: 'USD',
+        booking_system: 'wailea',
+        session_type: this.state.slug,
+        items: [{
+          item_id: this.state.slug,
+          item_name: this.state.name,
+          price: totalDollars,
+          quantity: 1,
+        }],
+      });
+    }
+
+    // Fires a GA4 "booking_abandoned" event for a booking that was created on the
+    // server (so we know its real dollar value) but never completed payment —
+    // either the client backed out of the widget, hit a declined/failed card, or
+    // left the tab entirely. Reported alongside `purchase` so revenue reporting can
+    // separate real sales from lost/abandoned attempts. Guards against firing:
+    //  - before a booking record exists (bookingId not set yet — nothing lost)
+    //  - after a successful purchase (trackPurchase sets state.purchased)
+    //  - more than once per booking (state.abandonTracked)
+    trackAbandoned(reason) {
+      if (typeof window.waileaTrack !== 'function') return;
+      if (!this.state || !this.state.bookingId) return;
+      if (this.state.purchased || this.state.abandonTracked) return;
+      this.state.abandonTracked = true;
+      const totalDollars = (this.state.totalPriceCents || 0) / 100;
+      window.waileaTrack('booking_abandoned', {
+        value: totalDollars,
+        currency: 'USD',
+        booking_system: 'wailea',
+        session_type: this.state.slug,
+        reason,
+        transaction_id: this.state.bookingReference || String(this.state.bookingId || ''),
+        items: [{
+          item_id: this.state.slug,
+          item_name: this.state.name,
+          price: totalDollars,
+          quantity: 1,
+        }],
+      });
+    }
   }
 
   const widget = new BookingWidget();
   window.WaileaBookingWidget = widget;
 
-  // Delegated: one listener, active immediately, catches taps on any booking button
-  document.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-book-session]');
-    if (!btn) return;
-    e.preventDefault();
-    widget.open(btn.getAttribute('data-book-session'), btn.getAttribute('data-session-name') || 'Your Session');
+  // Catches abandonment when the client closes the tab / navigates away entirely
+  // instead of clicking the widget's own close button (which already calls
+  // trackAbandoned via close()). pagehide fires reliably on tab close, unlike
+  // beforeunload, and works on mobile Safari where unload doesn't fire.
+  window.addEventListener('pagehide', () => {
+    if (widget.state) widget.trackAbandoned('left_page');
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-book-session]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        widget.open(btn.getAttribute('data-book-session'), btn.getAttribute('data-session-name') || 'Your Session');
+      });
+    });
+
+    // Deep-link support for "Calendar" CTAs on the experience landing pages
+    // (maui-family-photographer.html etc.) — e.g. pricing.html?openBooking=babymoon
+    // opens straight into that session's live calendar instead of making the visitor
+    // scroll and pick a card first.
+    const openSlug = new URLSearchParams(window.location.search).get('openBooking');
+    if (openSlug) {
+      const target = document.querySelector(`[data-book-session="${CSS.escape(openSlug)}"]`);
+      if (target) target.click();
+    }
   });
 })();
