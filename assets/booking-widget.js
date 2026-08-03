@@ -501,12 +501,11 @@
   const widget = new BookingWidget();
   window.WaileaBookingWidget = widget;
 
-  document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('[data-book-session]').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        widget.open(btn.getAttribute('data-book-session'), btn.getAttribute('data-session-name') || 'Your Session');
-      });
-    });
+  // Delegated: one listener, active immediately, catches taps on any booking button
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-book-session]');
+    if (!btn) return;
+    e.preventDefault();
+    widget.open(btn.getAttribute('data-book-session'), btn.getAttribute('data-session-name') || 'Your Session');
   });
 })();
