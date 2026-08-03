@@ -101,7 +101,51 @@
     eventId,
   };
 
-  track('PageView');
+  // Bridge for booking-widget.js, which is shared with the sister site (waileaphoto.com)
+    // and calls window.waileaTrack(...) with GA4-style event names. That function was never
+    // defined on this site, so booking_start/begin_checkout/purchase/booking_abandoned were
+    // silently going nowhere — only PageView and Contact ever reached the Pixel. This maps
+    // each call onto the equivalent Meta standard event (or a custom one where there's no
+    // standard match) so real booking activity actually reaches ad optimization.
+    window.waileaTrack = function (eventName, params) {
+          params = params || {};
+          const currency = params.currency || 'USD';
+          switch (eventName) {
+            case 'booking_start':
+                      track('ViewContent', {
+                                  content_name: params.session_type,
+                                  content_category: 'booking',
+                      });
+                      break;
+            case 'begin_checkout':
+                      track('InitiateCheckout', {
+                                  value: params.value,
+                                  currency,
+                                  content_name: params.session_type,
+                                  num_items: 1,
+                      });
+                      break;
+            case 'purchase':
+                      track(
+                                  'Purchase',
+                        { value: params.value, currency, content_name: params.session_type },
+                                  params.transaction_id ? `purchase-${params.transaction_id}` : undefined
+                                );
+                      break;
+            case 'booking_abandoned':
+                      trackCustom('BookingAbandoned', {
+                                  value: params.value,
+                                  currency,
+                                  content_name: params.session_type,
+                                  reason: params.reason,
+                      });
+                      break;
+            default:
+                      trackCustom(eventName, params);
+          }
+    };
+  
+    track('PageView');
 
   document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('a[href^="tel:"], a[href^="mailto:"]').forEach((link) => {
