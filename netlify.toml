@@ -15,6 +15,18 @@
       to = "/"
         status = 301
 
+          # Old CMS blog-filter query strings (e.g. /?blog=y&blogcategory=Maui+Food+Reviews) already
+            # resolve to the homepage, but Google sees each one as a separate duplicate page. Redirect
+              # them to the clean homepage URL. Scoped narrowly to the `blog` param so real ad-tracking
+                # query strings (utm_source, fbclid, etc.) on the homepage are never touched.
+                  [[redirects]]
+                      from = "/"
+                          to = "/"
+                              status = 301
+                                  force = true
+                                      [redirects.query]
+                                            blog = ":anything"
+
 [[headers]]
   for = "/*"
   [headers.values]
