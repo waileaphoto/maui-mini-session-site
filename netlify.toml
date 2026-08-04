@@ -9,7 +9,7 @@
 
   # Old blog post URLs from a previous version of this site (Squarespace-style /f/ paths)
   # are still indexed by Google and were 404ing. Send them to the homepage instead of a
-  # dead end for anyone clicking through from a stale search result.
+  # dead end for anyone clicking through from a stale search result. .
   [[redirects]]
     from = "/f/*"
       to = "/"
