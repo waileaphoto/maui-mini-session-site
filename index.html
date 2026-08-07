@@ -226,17 +226,25 @@
 <div class="value-item"><span class="dot"></span>Family-run on Maui for 25+ years</div>
 </section>
 
-<!-- REVIEWS SECTION -->
+<!-- REVIEWS SECTION MOVED DIRECTLY BELOW TITLE/VALUE STRIP -->
 <section class="reviews" id="reviews">
 <div class="section-head">
 <div class="chapter">REAL CLIENT EXPERIENCES</div>
 <h2>Trusted by Maui visitors.</h2>
 <p>Read recent reviews from clients who booked photographs with our family.</p>
 </div>
-
-<!-- Elfsight platform script without lazy attribute for solid mobile/in-app webview rendering -->
-<script src="https://elfsightcdn.com/platform.js"></script>
-<div class="elfsight-app-befd2998-eb1b-4c78-88ce-bea5dc308fba"></div>
+<style>
+.reviews-badge{max-width:520px;margin:0 auto 10px;padding:26px 28px;text-align:center;background:#fff;border:1px solid rgba(23,23,22,.08);border-radius:18px;box-shadow:0 10px 30px rgba(23,23,22,.05)}
+.reviews-badge .rb-stars{color:#b0623f;font-size:22px;letter-spacing:5px}
+.reviews-badge .rb-rating{margin:12px 0 5px;font:500 18px/1.35 'Cormorant Garamond',Georgia,serif;color:#2b2a27}
+.reviews-badge .rb-rating strong{font-weight:600}
+.reviews-badge .rb-sources{margin:0;font:600 10px/1.5 Inter,system-ui,sans-serif;letter-spacing:.15em;text-transform:uppercase;color:#5b6b52}
+</style>
+<div class="reviews-badge" role="img" aria-label="Rated 5.0 out of 5 from over 1,000 five-star reviews across Google, Tripadvisor, Facebook and Airbnb">
+<div class="rb-stars" aria-hidden="true">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+<p class="rb-rating"><strong>5.0</strong> rating &middot; 1,000+ five-star reviews</p>
+<p class="rb-sources">Google &middot; Tripadvisor &middot; Facebook &middot; Airbnb</p>
+</div>
 
 <div class="mini-review-grid" aria-label="Recent reviews of our family photography team">
   <figure class="mini-review-card">
@@ -326,6 +334,7 @@
 <p class="weather-note">Easy rescheduling before your session if Maui weather isn&rsquo;t cooperating.</p>
 </section>
 
+<!-- NEW SECTION: WHAT TO WEAR & PREPARE -->
 <section class="faq" id="styling" style="background: rgba(147, 168, 132, 0.08); padding-top: 3rem; padding-bottom: 3rem;">
 <div class="section-head">
 <div class="chapter">SESSION STYLING &amp; TIPS</div>
@@ -453,3 +462,4 @@ document.getElementById('year') && (document.getElementById('year').textContent 
 })();
 </script>
 </body></html>
+
