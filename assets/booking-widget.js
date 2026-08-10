@@ -67,6 +67,39 @@
     if (!res.ok) throw new Error(json.error || 'Request failed');
     return json;
   }
+  // First-touch marketing attribution. Reads utm_* + ad click ids from the landing-page
+  // URL and remembers them for this browser tab (sessionStorage), so they survive the
+  // multi-step booking flow before checkout. Sent with the booking so the revenue report
+  // can tie it back to the traffic source. Best-effort: any failure returns null and
+  // never blocks a booking.
+  const ATTRIBUTION_STORAGE_KEY = 'wbw_attribution';
+  function captureAttribution() {
+    try {
+      const stored = sessionStorage.getItem(ATTRIBUTION_STORAGE_KEY);
+      if (stored) return JSON.parse(stored);
+    } catch (e) { /* sessionStorage unavailable — read the URL directly */ }
+    let params;
+    try { params = new URLSearchParams(window.location.search); }
+    catch (e) { params = new URLSearchParams(); }
+    const pick = (...keys) => { for (const k of keys) { const v = params.get(k); if (v) return v; } return null; };
+    let referrerHost = null;
+    try { if (document.referrer) referrerHost = new URL(document.referrer).hostname || null; }
+    catch (e) { /* opaque or missing referrer */ }
+    const attribution = {
+      utm_source: pick('utm_source'),
+      utm_medium: pick('utm_medium'),
+      utm_campaign: pick('utm_campaign'),
+      utm_content: pick('utm_content'),
+      utm_term: pick('utm_term'),
+      click_id: pick('fbclid', 'gclid', 'ttclid', 'msclkid'),
+      landing_referrer: referrerHost,
+    };
+    if (!Object.values(attribution).some(Boolean)) return null;
+    try { sessionStorage.setItem(ATTRIBUTION_STORAGE_KEY, JSON.stringify(attribution)); }
+    catch (e) { /* can't persist — still return it for this booking */ }
+    return attribution;
+  }
+  captureAttribution();
 
   function el(tag, attrs, children) {
     const node = document.createElement(tag);
@@ -456,6 +489,7 @@
             specialRequests: this.specialRequestsInput.value || undefined,
             floristContactRequested: this.floristContactCheckbox.checked,
           },
+          attribution: captureAttribution() || undefined,
         });
         this.state.bookingId = result.booking.id;
         this.state.bookingReference = result.booking.booking_reference;
