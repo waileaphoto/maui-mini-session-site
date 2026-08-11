@@ -205,6 +205,11 @@
 
       this.policyBox = el('div', { class: 'wbw-policy-box' }, POLICY_LINES.map((t) => el('p', {}, [t])));
       this.policyCheckbox = el('input', { type: 'checkbox' });
+      this.textConfirmCheckbox = el('input', { type: 'checkbox' });
+      this.textConfirmRow = el('label', { class: 'wbw-policy-agree' }, [
+        this.textConfirmCheckbox,
+        ' One of our team will be assigned to you, and your photographer will text you to confirm in case of any last-minute changes. Please have your phone charged and respond to their text — otherwise the photographer will assume you are a no-show.',
+      ]);
 
       this.quoteBox = el('div', { class: 'wbw-quote' });
       this.detailsError = el('div', { class: 'wbw-error' });
@@ -227,6 +232,7 @@
           el('label', {}, ['Session Policies']),
           this.policyBox,
           el('label', { class: 'wbw-policy-agree' }, [this.policyCheckbox, ' I have read and agree to the session policies above.']),
+          this.textConfirmRow,
         ]),
         this.quoteBox,
         this.detailsError,
@@ -289,6 +295,7 @@
         this.addonRows[addon.slug].hidden = !applies;
         this.addonInputs[addon.slug].checked = false;
       });
+      this.textConfirmCheckbox.checked = false;
       this.specialRequestsInput.value = '';
       this.floristContactCheckbox.checked = false;
       this.titleEl.textContent = name;
@@ -471,6 +478,10 @@
         this.detailsError.textContent = 'Please agree to the session policies to continue.';
         return;
       }
+      if (!this.textConfirmCheckbox.checked) {
+        this.detailsError.textContent = "Please confirm you'll respond to your photographer's text to continue.";
+        return;
+      }
       const btn = event?.target;
       const originalLabel = btn ? btn.textContent : null;
       if (btn) { btn.disabled = true; btn.textContent = 'Please wait…'; }
@@ -484,6 +495,7 @@
           client: { name: this.nameInput.value, email: this.emailInput.value, phone: this.phoneInput.value, smsOptIn: this.smsOptInCheckbox.checked },
           questionnaire: {
             agreedToPolicies: this.policyCheckbox.checked,
+            acknowledgedTextConfirmation: this.textConfirmCheckbox.checked,
             hearAboutUs: this.hearAboutInput.value,
             celebrating: this.celebratingInput.value || undefined,
             specialRequests: this.specialRequestsInput.value || undefined,
