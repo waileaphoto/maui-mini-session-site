@@ -12,11 +12,24 @@
       if (figures.length <= 1 || !prevBtn || !nextBtn) return;
 
       let index = Math.max(0, figures.findIndex((f) => f.classList.contains('active')));
+      let touchStartX = 0;
+
+      tile.setAttribute('role', 'group');
+      tile.setAttribute('aria-roledescription', 'carousel');
+
+      function updateAccessibility() {
+        figures.forEach((figure, figureIndex) => {
+          const visible = figureIndex === index;
+          figure.setAttribute('aria-hidden', visible ? 'false' : 'true');
+          figure.querySelector('img')?.setAttribute('tabindex', visible ? '0' : '-1');
+        });
+      }
 
       function show(nextIndex) {
         figures[index].classList.remove('active');
         index = (nextIndex + figures.length) % figures.length;
         figures[index].classList.add('active');
+        updateAccessibility();
       }
 
       prevBtn.addEventListener('click', (e) => {
@@ -29,6 +42,20 @@
         e.stopPropagation();
         show(index + 1);
       });
+
+      tile.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') { e.preventDefault(); show(index - 1); }
+        if (e.key === 'ArrowRight') { e.preventDefault(); show(index + 1); }
+      });
+      tile.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].clientX;
+      }, { passive: true });
+      tile.addEventListener('touchend', (e) => {
+        const distance = e.changedTouches[0].clientX - touchStartX;
+        if (Math.abs(distance) > 45) show(index + (distance < 0 ? 1 : -1));
+      }, { passive: true });
+
+      updateAccessibility();
     });
   });
 })();
