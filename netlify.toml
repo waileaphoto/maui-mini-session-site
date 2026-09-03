@@ -7,13 +7,27 @@
   status = 301
   force = true
 
-  # Old blog post URLs from a previous version of this site (Squarespace-style /f/ paths)
-  # are still indexed by Google and were 404ing. Send them to the homepage instead of a
-  # dead end for anyone clicking through from a stale search result. .
-  [[redirects]]
-    from = "/f/*"
-      to = "/"
-        status = 301
+# Consolidate exact legacy Squarespace query URLs without touching UTM or
+# booking attribution parameters. Netlify query rules require an exact match.
+[[redirects]]
+  from = "/"
+  to = "/"
+  status = 301
+  force = true
+  query = { blog = "y" }
+
+[[redirects]]
+  from = "/"
+  to = "/"
+  status = 301
+  force = true
+  query = { blogcategory = ":category" }
+
+# Old Squarespace-style /f/ paths still appear in historic indexes.
+[[redirects]]
+  from = "/f/*"
+  to = "/"
+  status = 301
 
 [[headers]]
   for = "/*"
