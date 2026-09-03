@@ -7,22 +7,6 @@
   status = 301
   force = true
 
-# Consolidate exact legacy Squarespace query URLs without touching UTM or
-# booking attribution parameters. Netlify query rules require an exact match.
-[[redirects]]
-  from = "/"
-  to = "/"
-  status = 301
-  force = true
-  query = { blog = "y" }
-
-[[redirects]]
-  from = "/"
-  to = "/"
-  status = 301
-  force = true
-  query = { blogcategory = ":category" }
-
 # Old Squarespace-style /f/ paths still appear in historic indexes.
 [[redirects]]
   from = "/f/*"
