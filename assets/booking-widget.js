@@ -16,6 +16,7 @@
     { slug: 'film', label: 'Real film (Kodak/FujiFilm)' },
     { slug: 'bw', label: 'Classic Black & White add-on' },
     { slug: 'apo_lens', label: 'Leica APO lens upgrade' },
+    { slug: 'camera_upgrade_review', label: 'Camera upgrade — Leica SL3 or Q3, free for posting a review', priceLabel: 'Free' },
     {
       slug: 'double-sunset',
       label: 'Special-Double your session time to include Last Half Sunset',
