@@ -56,3 +56,7 @@ img{display:block;width:100%;max-width:100%}a{color:inherit;text-decoration:none
 .consent .consent-no{background:transparent;color:#141414}
 .consent .consent-yes{background:#141414;color:#fff}
 @media (max-width:560px){.consent{padding:18px 20px;gap:14px}.consent-btns{margin-left:0;width:100%}.consent button{flex:1}}
+/* Closing image: show the whole photograph on every screen */
+.closing{min-height:0;aspect-ratio:2000/1331;max-height:none}
+.closing>img{object-fit:cover;object-position:center}
+@media(max-width:700px){.closing{display:block;aspect-ratio:auto;background:var(--ink)}.closing>img{position:static;display:block;width:100%;height:auto;aspect-ratio:2000/1331}.closing-shade{display:none}.closing-copy{padding:44px 20px 56px}.closing-copy h2{font-size:clamp(3rem,13vw,4rem)}}
